@@ -24,10 +24,12 @@ namespace scl{
 		std::future<int> listener;
 		std::vector<std::future<int>> connections;
 
+		int num_of_connected_clients;
+
 		int socket_fd;
 		bool is_ipv6;
 		bool is_online;
-		server(): socket_fd(0), is_online(false), is_ipv6(false){
+		server(): socket_fd(0), is_online(false), is_ipv6(false), num_of_connected_clients(0){
 		}
 	};
 
@@ -70,6 +72,8 @@ namespace scl{
 
 	int async_listen_ipv4(server* serv);
 	int async_listen_ipv6(server* serv);
+
+	int echo_server(server* serv, int client_fd, int conn_id);
 
 	extern err_code server_create(server* serv, std::string ip, int port, bool ipv6 = false);
 	extern err_code client_create(std::string ipv4_dest, short port_dest);

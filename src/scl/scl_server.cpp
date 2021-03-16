@@ -2,6 +2,29 @@
 
 using namespace scl;
 
+
+int scl::echo_server(server* serv, int client_fd, int conn_id){
+	for(;;){
+		char buffer[1024] = { 0 };
+		int val = read(client_fd , buffer, 1024);
+		if(val <= 0){
+			printf("CONNECTION '%i' CLOSED\n", conn_id);
+			serv->num_of_connected_clients--;
+			printf("NUMBER OF REMAINING CLIENTS: '%i'\n", serv->num_of_connected_clients);
+			return -1;
+		}
+	    printf("%s\n",buffer );
+	    val = send(client_fd, buffer, 1024, 0);
+		if(val <= 0){
+			printf("CONNECTION '%i' CLOSED\n", conn_id);
+			serv->num_of_connected_clients--;
+			printf("NUMBER OF REMAINING CLIENTS: '%i'\n", serv->num_of_connected_clients);
+			return -1;
+		}
+	}
+	return -1;
+}
+
 int scl::async_listen_ipv4(server* serv){
 	for(;;){
 		printf("Listening!\n");
@@ -18,7 +41,8 @@ int scl::async_listen_ipv4(server* serv){
 		struct sockaddr_in *cli_addr = reinterpret_cast<struct sockaddr_in*>(&address);
 		char* ip = inet_ntoa(cli_addr->sin_addr);
 		printf("Got connection form: '%s'\n", ip);
-
+		serv->num_of_connected_clients++;
+		serv->connections.push_back(std::async(echo_server, serv, cli_socket, serv->connections.size()));
 	}
 
 	return 0;
@@ -41,6 +65,8 @@ int scl::async_listen_ipv6(server *serv){
 		char ip[INET6_ADDRSTRLEN];
 		inet_ntop(AF_INET6, &(address.sin6_addr), ip, sizeof(ip));
 		printf("Got connection form: '%s'\n", ip);
+		serv->num_of_connected_clients++;
+		serv->connections.push_back(std::async(echo_server, serv, cli_socket, serv->connections.size()));
 
 	}
 
