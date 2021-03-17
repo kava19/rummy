@@ -27,63 +27,61 @@ int scl::echo_server(server* serv, int client_fd, int conn_id){
 	return -1;
 }
 
-int scl::async_listen_ipv4(server* serv){
+int scl::async_listen(server* serv){
 	for(;;){
 		printf("Listening!\n");
+
+		int cli_socket;
+		int address_len;
+
 
 		struct sockaddr address;
-		int address_len;
-		int cli_socket = accept(serv->socket_fd, &address, (socklen_t*)&address_len);
+		cli_socket = accept(serv->socket_fd, &address, (socklen_t*)&address_len);
 
 		if(cli_socket == -1){
 			print_errno(errno);
 			return err_code::SERVER_ACCEPT_FAILED;
 		}
 
-		struct sockaddr_in *cli_addr = reinterpret_cast<struct sockaddr_in*>(&address);
-		char* ip = inet_ntoa(cli_addr->sin_addr);
-		printf("Got connection form: '%s'\n", ip);
-		serv->num_of_connected_clients++;
-		serv->connections.push_back(std::async(echo_server, serv, cli_socket, serv->connections.size()));
-	}
 
-	return 0;
-}
-
-
-int scl::async_listen_ipv6(server *serv){
-	for(;;){
-		printf("Listening!\n");
-
-		int address_len;
-		struct sockaddr_in6 address;
-		int cli_socket = accept(serv->socket_fd, (struct sockaddr*)&address, (socklen_t*)&address_len);
-
-		if(cli_socket == -1){
-			print_errno(errno);
-			return err_code::SERVER_ACCEPT_FAILED;
+		socklen_t len = INET_ADDRSTRLEN;
+		int af = AF_INET;
+		if(serv->is_ipv6){
+			len = INET6_ADDRSTRLEN;
+			af = AF_INET6;
 		}
 
-		char ip[INET6_ADDRSTRLEN];
-		inet_ntop(AF_INET6, &(address.sin6_addr), ip, sizeof(ip));
+
+		char *ip;
+		ip = new char[len];
+		if(serv->is_ipv6){
+			struct sockaddr_in *cli_addr = reinterpret_cast<struct sockaddr_in*>(&address);
+			inet_ntop(af, cli_addr, ip, sizeof(char) * len);
+		}
+		else{
+			struct sockaddr_in6 *cli_addr = reinterpret_cast<struct sockaddr_in6*>(&address);
+			inet_ntop(af, cli_addr, ip, sizeof(char) * len);
+		}
+
 		printf("Got connection form: '%s'\n", ip);
 		serv->num_of_connected_clients++;
 		serv->connections.push_back(std::async(echo_server, serv, cli_socket, serv->connections.size()));
-
 	}
 
 	return 0;
+
 }
+
 
 err_code scl::server_start_to_listen(server* serv){
 	if(serv == nullptr)
 		return err_code::SERVER_NULLPTR;
 
-
-	if(serv->is_ipv6)
+serv->listener = std::async(async_listen, serv);
+	/*if(serv->is_ipv6)
 		serv->listener = std::async(async_listen_ipv6, serv);
 	else
-		serv->listener = std::async(async_listen_ipv4, serv);
+		serv->listener = std::async(async_listen_ipv4, serv);*/
 
 	return err_code::OK;
 }

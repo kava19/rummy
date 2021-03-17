@@ -75,8 +75,7 @@ namespace scl{
 
 	int push_new_connection();
 
-	int async_listen_ipv4(server* serv);
-	int async_listen_ipv6(server* serv);
+	int async_listen(server* serv);
 
 	int echo_server(server* serv, int client_fd, int conn_id);
 
