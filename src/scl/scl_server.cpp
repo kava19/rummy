@@ -64,6 +64,9 @@ int scl::async_listen(server* serv){
 		}
 
 		printf("Got connection form: '%s'\n", ip);
+
+		delete ip;
+
 		serv->num_of_connected_clients++;
 		serv->connections.push_back(std::async(echo_server, serv, cli_socket, serv->connections.size()));
 	}
@@ -77,11 +80,7 @@ err_code scl::server_start_to_listen(server* serv){
 	if(serv == nullptr)
 		return err_code::SERVER_NULLPTR;
 
-serv->listener = std::async(async_listen, serv);
-	/*if(serv->is_ipv6)
-		serv->listener = std::async(async_listen_ipv6, serv);
-	else
-		serv->listener = std::async(async_listen_ipv4, serv);*/
+	serv->listener = std::async(async_listen, serv);
 
 	return err_code::OK;
 }
