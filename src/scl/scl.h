@@ -19,6 +19,11 @@
 namespace scl{
 	const int BACKLOG = 8;
 
+	struct connection {
+		std::future<int> func;
+		int client_fd;
+		int id;
+	};
 
 	struct server{
 		std::future<int> listener;
